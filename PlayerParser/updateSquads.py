@@ -54,14 +54,14 @@ def startLeagues():
 	for team in SerieA:
 		downloadTeam(team)'''
 
-def downloadTeam(threadName, League):
+def downloadTeam(leagueName, League, ):
 
 	opener = urllib.request.build_opener()
 	opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
 	for team in League:
-		url = 'http://www.futhead.com/17/clubs/'
-		url += team
-		url += '/'
+		#url = 'http://www.futhead.com/17/clubs/'
+		#url += team
+		#url += '/'
 		print(url)
 		site = opener.open(url)
 		info = BeautifulSoup(site.read(), 'html.parser')
@@ -75,7 +75,7 @@ def downloadTeam(threadName, League):
 		defending = info.find_all('div', {'class':'playercard-attr playercard-attr5'})
 		physical = info.find_all('div', {'class':'playercard-attr playercard-attr6'})
 		i = 0
-		teamFile = createFiles(threadName, team)
+		teamFile = createFiles(leagueName, team)
 		for item in names:
 			crrntPlyr = item.contents[0] 
 			if(crrntPlyr != 'All Players' and 
@@ -95,7 +95,7 @@ def downloadTeam(threadName, League):
 				i += 1
 	global leaguesFinished 
 	leaguesFinished += 1
-	print(threadName,': done')
+	print(leagueName,': done')
 	
 def writePlayer(name, position, rating, pace, shooting, passing, dribbling, defending, physical, teamFile):
 	teamFile.write(name+','+position+','+rating+','+pace+','+shooting+','+passing+','+dribbling+','+defending+','+
@@ -108,7 +108,8 @@ def createFiles(threadName, team):
 		teamFile = open(teamFileName, 'w+', encoding='utf8')
 		return teamFile
 
-startLeagues()
-
-while leaguesFinished<numberOfLeagues:
-	pass
+#startLeagues()
+if  __name__ = '__main__':
+	
+#while leaguesFinished<numberOfLeagues:
+#	pass
