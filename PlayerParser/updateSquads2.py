@@ -1,14 +1,35 @@
 from bs4 import BeautifulSoup
 import urllib.request
 import os
+import _thread
+
+current = 0
+numberOfPages = 0
+finishedThreads = 0
+lock = _thread.allocate_lock()
+
+def getPage():
+	global current
+	current = current + 1
+
+def startThreads():
+	print(current)
+	_thread.start_new_thread(test1, ())
+	_thread.start_new_thread(test1, ())
+	_thread.start_new_thread(test1, ())
+	_thread.start_new_thread(test1, ())
+	print("created thread")
+	while finishedThreads < 4:
+		pass
 
 def test1():
-	opener = urllib.request.build_opener()
-	opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
-	for n in range(26):
+	print(current)
+	lock.acquire()
+	getPage()
+	if current <= numberOfPages:
 		url = 'http://www.futhead.com/17/clubs/?page='
-		url += str(n+1)
-		#print(url)
+		url += str(current)
+		lock.release()
 		site = opener.open(url)
 		info = BeautifulSoup(site.read(), 'html.parser')
 		teams = info.find_all('div', {'class':'player-item'})
@@ -30,6 +51,10 @@ def test1():
 					downloadTeam(league, teamURL, teamName)
 			#for l in team.find_all('span',{'class':'player-club-league-name'}):
 			#	print(l.string)
+	else:
+		lock.release()
+		finishedThreads += 1
+			
 
 def getTeam():
 	pass
@@ -86,4 +111,5 @@ def createFiles(threadName, team):
 		return teamFile
 		
 if __name__ == '__main__':
-	test1()
+	numberOfPages = 26
+	startThreads()
