@@ -7,6 +7,7 @@ current = 0
 numberOfPages = 0
 finishedThreads = 0
 lock = _thread.allocate_lock()
+done = False
 
 def getPage():
 	global current
@@ -18,42 +19,45 @@ def startThreads():
 	_thread.start_new_thread(test1, ())
 	_thread.start_new_thread(test1, ())
 	_thread.start_new_thread(test1, ())
-	print("created thread")
+	print("created threads")
 	while finishedThreads < 4:
 		pass
+	done = True
+	print("finished")
 
 def test1():
-	print(current)
-	lock.acquire()
-	getPage()
-	if current <= numberOfPages:
-		url = 'http://www.futhead.com/17/clubs/?page='
-		url += str(current)
-		lock.release()
-		site = opener.open(url)
-		info = BeautifulSoup(site.read(), 'html.parser')
-		teams = info.find_all('div', {'class':'player-item'})
-		for team in teams:
-			teamURL = 'http://www.futhead.com'
-			for a in team.find_all('a', href=True):
-				teamPage = a['href']
-				leagueNS = team.find_all('span',{'class':'player-club-league-name'})
-				teamNameNS = team.find_all('span',{'class':'player-name'})
-				if teamPage[0] != '?':
-					teamURL += teamPage
-					teamName = teamNameNS[0].contents[0]
-					teamName = teamName.strip('\n')
-					teamName = teamName.strip()
-					league = leagueNS[0].contents[0]
-					league = league.strip('\n')
-					league = league.strip()
-					print(teamName)
-					downloadTeam(league, teamURL, teamName)
-			#for l in team.find_all('span',{'class':'player-club-league-name'}):
-			#	print(l.string)
-	else:
-		lock.release()
-		finishedThreads += 1
+	global finishedThreads
+	opener = urllib.request.build_opener()
+	opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
+	while done == False:
+		lock.acquire()
+		getPage()
+		if current <= numberOfPages:
+			url = 'http://www.futhead.com/17/clubs/?page='
+			url += str(current)
+			lock.release()
+			site = opener.open(url)
+			info = BeautifulSoup(site.read(), 'html.parser')
+			site.close()
+			teams = info.find_all('div', {'class':'player-item'})
+			for team in teams:
+				teamURL = 'http://www.futhead.com'
+				for a in team.find_all('a', href=True):
+					teamPage = a['href']
+					leagueNS = team.find_all('span',{'class':'player-club-league-name'})
+					teamNameNS = team.find_all('span',{'class':'player-name'})
+					if teamPage[0] != '?':
+						teamURL += teamPage
+						teamName = teamNameNS[0].contents[0]
+						teamName = teamName.strip('\n')
+						teamName = teamName.strip()
+						league = leagueNS[0].contents[0]
+						league = league.strip('\n')
+						league = league.strip()
+						downloadTeam(league, teamURL, teamName)
+		else:
+			lock.release()
+			finishedThreads += 1
 			
 
 def getTeam():
@@ -63,12 +67,9 @@ def downloadTeam(leagueName, url, team):
 
 	opener = urllib.request.build_opener()
 	opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
-	#url = 'http://www.futhead.com/17/clubs/'
-	#url += team
-	#url += '/'
-	print(url)
 	site = opener.open(url)
 	info = BeautifulSoup(site.read(), 'html.parser')
+	site.close()
 	names = info.find_all('div', {'class':'playercard-name'})
 	position = info.find_all('div', {'class':'playercard-position'})
 	rating = info.find_all('div', {'class':'playercard-rating'})
